@@ -1,0 +1,83 @@
+name: Windows CI
+
+on: [push, pull_request]
+
+jobs:
+  cmake:
+    name: Windows ${{ matrix.config.name }} (CMake)
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        config:
+          - name: MinGW
+            generator: Ninja
+
+          - name: MSVC x86
+            generator: Visual Studio 16 2019
+            cmake-flags: -A Win32
+
+          - name: MSVC x64
+            generator: Visual Studio 16 2019
+            cmake-flags: -A x64
+
+          - name: MSVC x64 shared
+            generator: Visual Studio 16 2019
+            cmake-flags: -A x64 -DBUILD_SHARED_LIBS=ON
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Ninja
+        if: matrix.config.generator == 'Ninja'
+        run: choco install ninja | Out-Null
+
+      - name: Configure
+        run: cmake -G "${{ matrix.config.generator }}" ${{ matrix.config.cmake-flags }} -DCMAKE_BUILD_TYPE=Debug -B build
+
+      - name: Build
+        run: cd build && cmake --build . --config Debug
+
+      - name: Test
+        run: cd build && ctest -V --output-on-failure --interactive-debug-mode 0 -C Debug
+
+  meson:
+    name: Windows ${{ matrix.config.name }} (Meson)
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        config:
+          - name: MSVC x86
+            arch: x86
+
+          - name: MSVC x64
+            arch: amd64
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+
+      - name: Install Meson
+        run: pip install meson ninja
+
+      - name: Configure
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -no_logo -arch=${{ matrix.config.arch }}
+          meson setup build
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -no_logo -arch=${{ matrix.config.arch }}
+          ninja -C build
+
+      - name: Test
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -no_logo -arch=${{ matrix.config.arch }}
+          ninja -C build test

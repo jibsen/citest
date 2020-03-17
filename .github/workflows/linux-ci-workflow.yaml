@@ -1,0 +1,82 @@
+name: Linux CI
+
+on: [push, pull_request]
+
+jobs:
+  cmake:
+    name: Linux ${{ matrix.config.name }} (CMake)
+    runs-on: ubuntu-latest
+    env:
+      CC: ${{ matrix.config.cc }}
+      CXX: ${{ matrix.config.cxx }}
+
+    strategy:
+      matrix:
+        config:
+          - name: Clang asan
+            cc: clang
+            cxx: clang++
+            cmake-flags: -DCMAKE_C_FLAGS_DEBUG='-O1 -fno-omit-frame-pointer -fsanitize=address'
+
+          - name: Clang shared
+            cc: clang
+            cxx: clang++
+            cmake-flags: -DBUILD_SHARED_LIBS=ON
+
+          - name: GCC
+            cc: gcc
+            cxx: g++
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure
+        run: cmake ${{ matrix.config.cmake-flags }} -DCMAKE_BUILD_TYPE=Debug -B build
+
+      - name: Build
+        run: cd build && make VERBOSE=1
+
+      - name: Test
+        run: cd build && ctest -V --output-on-failure --interactive-debug-mode 0
+
+  meson:
+    name: Linux ${{ matrix.config.name }} (Meson)
+    runs-on: ubuntu-latest
+    env:
+      CC: ${{ matrix.config.cc }}
+      CXX: ${{ matrix.config.cxx }}
+
+    strategy:
+      matrix:
+        config:
+          - name: GCC
+            cc: gcc
+            cxx: g++
+
+          - name: Clang
+            cc: clang
+            cxx: clang++
+
+          - name: Clang asan
+            cc: clang
+            cxx: clang++
+            meson-flags: -Dbuildtype=debugoptimized -Db_lundef=false -Db_sanitize=address
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+
+      - name: Install Meson
+        run: pip install meson ninja
+
+      - name: Configure
+        run: meson setup build ${{ matrix.config.meson-flags }}
+
+      - name: Build
+        run: ninja -C build
+
+      - name: Test
+        run: ninja -C build test
