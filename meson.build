@@ -1,5 +1,5 @@
 project('citest', 'c',
-  meson_version : '>=0.45.0',
+  meson_version : '>=0.60.0',
   default_options : [
     'b_ndebug=if-release',
     'c_std=c99',
