@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   cmake:
     name: Windows ${{ matrix.config.name }} (CMake)
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     strategy:
       matrix:
@@ -14,19 +14,19 @@ jobs:
             generator: Ninja
 
           - name: MSVC x86
-            generator: Visual Studio 16 2019
+            generator: Visual Studio 17 2022
             cmake-flags: -A Win32
 
           - name: MSVC x64
-            generator: Visual Studio 16 2019
+            generator: Visual Studio 17 2022
             cmake-flags: -A x64
 
           - name: MSVC x64 shared
-            generator: Visual Studio 16 2019
+            generator: Visual Studio 17 2022
             cmake-flags: -A x64 -DBUILD_SHARED_LIBS=ON
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Ninja
         if: matrix.config.generator == 'Ninja'
@@ -55,9 +55,9 @@ jobs:
             arch: amd64
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
@@ -65,19 +65,10 @@ jobs:
         run: pip install meson ninja
 
       - name: Configure
-        shell: cmd
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -no_logo -arch=${{ matrix.config.arch }}
-          meson setup build
+        run: meson setup --vsenv build
 
       - name: Build
-        shell: cmd
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -no_logo -arch=${{ matrix.config.arch }}
-          ninja -C build
+        run: meson compile -C build -v
 
       - name: Test
-        shell: cmd
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -no_logo -arch=${{ matrix.config.arch }}
-          ninja -C build test
+        run: meson test -C build -v

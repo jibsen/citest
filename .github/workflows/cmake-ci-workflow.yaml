@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   windows:
     name: Windows ${{ matrix.config.name }}
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     strategy:
       matrix:
@@ -14,19 +14,19 @@ jobs:
             generator: Ninja
 
           - name: MSVC x86
-            generator: Visual Studio 16 2019
+            generator: Visual Studio 17 2022
             cmake-flags: -A Win32
 
           - name: MSVC x64
-            generator: Visual Studio 16 2019
+            generator: Visual Studio 17 2022
             cmake-flags: -A x64
 
           - name: MSVC x64 shared
-            generator: Visual Studio 16 2019
+            generator: Visual Studio 17 2022
             cmake-flags: -A x64 -DBUILD_SHARED_LIBS=ON
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Ninja
         if: matrix.config.generator == 'Ninja'
@@ -66,13 +66,13 @@ jobs:
             cxx: g++
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Configure
         run: cmake ${{ matrix.config.cmake-flags }} -DCMAKE_BUILD_TYPE=Debug -B build
 
       - name: Build
-        run: cd build && make VERBOSE=1
+        run: cd build && cmake --build . --verbose
 
       - name: Test
         run: cd build && ctest -V --output-on-failure --interactive-debug-mode 0

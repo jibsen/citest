@@ -28,13 +28,13 @@ jobs:
             cxx: g++
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Configure
         run: cmake ${{ matrix.config.cmake-flags }} -DCMAKE_BUILD_TYPE=Debug -B build
 
       - name: Build
-        run: cd build && make VERBOSE=1
+        run: cd build && cmake --build . --verbose
 
       - name: Test
         run: cd build && ctest -V --output-on-failure --interactive-debug-mode 0
@@ -63,9 +63,9 @@ jobs:
             meson-flags: -Dbuildtype=debugoptimized -Db_lundef=false -Db_sanitize=address
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
