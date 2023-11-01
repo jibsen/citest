@@ -7,7 +7,7 @@ project('citest', 'c',
     'warning_level=3',
   ],
   version : '0.1.0',
-  license : 'MIT'
+  license : 'MIT-0'
 )
 
 e = executable('citest', 'citest.c')
